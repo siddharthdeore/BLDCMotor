@@ -1,4 +1,4 @@
-# BLDCMotor
+# BLDC Motor Control
 Electric motor, commutation playground for three phase PMSM bldc motor
 
 ## Motor Parameters
