@@ -1,4 +1,4 @@
-# BLDC Motor Control
+# BLDC Motor Dynamics and Control
 Electric motor, commutation playground for three phase PMSM bldc motor
 
 ## Motor Parameters
