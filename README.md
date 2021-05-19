@@ -19,6 +19,8 @@ Resistance | R | 3.25 | Ohm
 
 ![FOC Example](https://github.com/siddharthdeore/BLDCMotor/blob/main/simulations/ex_1_foc.png)
 
-### Example 2 : Space Vector Control
+## Space Vector Control
+
+### Example 2 : Velocity Tracking
 
 ![FOC Example](https://github.com/siddharthdeore/BLDCMotor/blob/main/simulations/ex_2_sv.png)
