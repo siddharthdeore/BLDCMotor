@@ -18,3 +18,7 @@ Resistance | R | 3.25 | Ohm
 ### Example 1 : Angle Control
 
 ![FOC Example](https://github.com/siddharthdeore/BLDCMotor/blob/main/simulations/ex_1_foc.png)
+
+### Example 2 : Space Vector Control
+
+![FOC Example](https://github.com/siddharthdeore/BLDCMotor/blob/main/simulations/ex_2_sv.png)
