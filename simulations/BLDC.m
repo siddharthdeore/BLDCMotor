@@ -4,7 +4,7 @@ global integ_e
 integ_e=0;
 tau=0;
 X0=[0;0;0;0;0];
-tspan=linspace(0,5,100);
+tspan=linspace(0,2,1000);
 opts = odeset('RelTol',1e-6,'AbsTol',1e-6);
 [t,X] = ode45(@bldcDynamics,tspan,X0,opts);
 subplot(3,1,1);
@@ -27,60 +27,60 @@ w = X(4);       % angular velocity [rad/sec]
 theta = X(5);   % rotor angle [rad]
 
 % Motor Constants
-L = 2.72e-3;         % self-inductance phase  (L_aa = L_bb = L_cc) [H]
-M = 1.5e-3;        % mutual-inductance ( L_ab = L_bc = L_ca = M) [H]
-L1=L-M;             % [H]
+L = 2.72e-3;        % self-inductance phase  (L_aa = L_bb = L_cc) [H]
+M = 1.5e-3;         % mutual-inductance ( L_ab = L_bc = L_ca = M) [H]
+Ls = L - M;         % [H]
 R = 0.75;           % stator resistance per phase [ohm]
-J = 0.00284;         % inertia [Kg-m/sec^2]
+J = 0.00284;        % inertia [Kg-m/sec^2]
 B_coef = 0.02;      % friction coefficient  [N-m/rad/sec]
 P = 4;              % number of poles
 lamda =  0.105;     % flux linkage wb
-fa=sin(theta);
-fb=sin(theta-2*pi/3);
-fc=sin(theta+2*pi/3);
-lfa=lamda*fa/J;
-lfb=lamda*fb/J;
-lfc=lamda*fc/J;
-A = [
-        -R/L1,   0,  0,  lfa,  0;
-        0,   -R/L1,  0,  lfb,  0;
-        0,   0,  -R/L1,  lfc,  0;
-        lfa, lfb, lfc,  -B_coef/J, 0;
-        0,  0,  0,  P/2,    0 ];
 
+%% sin back EMF
+%fa=sin(theta);
+%fb=sin(theta-2*pi/3);
+%fc=sin(theta+2*pi/3);
+%% trapezoid back EMF
+[fa,fb,fc]=trapezoid(theta);
+
+%% State Space
+INV_Ls = 1/Ls;
+INV_J = 1/J;
+lfa=lamda*fa*INV_J;
+lfb=lamda*fb*INV_J;
+lfc=lamda*fc*INV_J;
+
+A = [
+        -R*INV_Ls,   0,  0,  lfa,  0;
+        0,   -R*INV_Ls,  0,  lfb,  0;
+        0,   0,  -R*INV_Ls,  lfc,  0;
+        lfa, lfb, lfc,  -B_coef*INV_J, 0;
+        0,  0,  0,  P/2,    0 ];
 B = [
-        1/L1,    0,  0,  0;
-        0,    1/L1,  0,  0;
-        0,    0,  1/L1,  0;
-        0,    0,  0, 1/L1;];
+        INV_Ls,    0,  0,  0;
+        0,    INV_Ls,  0,  0;
+        0,    0,  INV_Ls,  0;
+        0,    0,  0, INV_Ls;];
 C = [
-        -1/L1,0,0;
-        0,-1/L1,0;
-        0,0,-1/L1;
+        -INV_Ls,0,0;
+        0,-INV_Ls,0;
+        0,0,-INV_Ls;
     ];
 
-
 emf = w*lamda*[fa;fb;fc];
-
-% Velocity PI Controller
+%%  PI Controller
 omega_e = 10-w;
-PI_vel=(omega_e*1.5+integ_e*0.0009);
+tau_command=(omega_e*1.5+integ_e*0.0009);
 integ_e=integ_e+omega_e;
-
-[VA,VB,VC]=foc(i_a,i_b,i_c,theta,PI_vel);
+%% field oriented control
+[VA,VB,VC]=foc(i_a,i_b,i_c,theta,tau_command);
 U = [VA;VB;VC;0];
-
-% Space Vector
-%ctrl = -switching(theta+pi/2);
-%th=theta;ctrl=-[sin(th);sin(th-2*pi/3);sin(th+2*pi/3)];
-%ctrl=svpwm(theta+pi/2);
-%U = [ctrl;0];
-
+%%
 X_dot = A*X+[B*U;0]+[C*emf;0;0];
 end
 
 %% field oriented control
-function [A,B,C] = foc(a,b,c,theta,tau)
+function [A,B,C] = foc(a,b,c,theta,q_ref)
     theta = theta - pi/2; % Phase correction for a alinged with q axis
     ct = cos(theta);
     st = sin(theta);
@@ -93,19 +93,19 @@ function [A,B,C] = foc(a,b,c,theta,tau)
     d = alpha*st - beta*ct;
     q = alpha*ct + beta*st;
     % // phase a aligned with d axis
-    d = alpha*ct + beta*st;
+    % d = alpha*ct + beta*st;
     % q =-alpha*st + beta*ct;
     
     % // flux PI Regulator
-    d=0-d;
-    q=tau-q;
+    d=0-d; 
+    q=q_ref-q;
     % /* Park to Clarke Transform - alpha beta to dq */
     % // phase a alinged with q axis
-    alpha = d*st+q*ct; 
-    beta = -d*ct+q*st;
+    % alpha = d*st+q*ct; 
+    % beta = -d*ct+q*st;
     % // phase a aligned with d axis
-    %alpha = d*ct-q*st; 
-    %beta =  d*st+q*ct;
+    alpha = d*ct-q*st; 
+    beta =  d*st+q*ct;
     A =   alpha;
     B = - alpha*0.5 + 0.8661*beta; 
     C = - alpha*0.5 - 0.8661*beta;
@@ -170,44 +170,43 @@ function y = clip(x,bl,bu)
   y=min(max(x,bl),bu);
 end
 
+function [fa,fb,fc]=trapezoid(theta)
+% normalized bemf
+theta = mod(theta*180/pi,(360)); % wrap angle to 0-360
+if (theta>=0 && theta <60)
+    fa=1;
+    fb=-1;
+    fc=lerp(theta,0,60,1,-1);
+elseif (theta>=60 && theta <120)
+    fa=1;
+    fb=lerp(theta,60,120,-1,1);
+    fc=-1;
+elseif (theta>=120 && theta <180)
+    fa=lerp(theta,120,180,1,-1);
+    fb=1;
+    fc=-1;
+elseif (theta>=180 && theta <240)
+    fa=-1;
+    fb=1;
+    fc=lerp(theta,180,240,-1,1);
+elseif (theta>=240 && theta <300)
+    fa=-1;
+    fb=lerp(theta,240,300,1,-1);
+    fc=1;
+elseif (theta>=300 && theta <360)
+    fa=lerp(theta,300,360,-1,1);
+    fb=-1;
+    fc=1;    
+end
 
-%% unit trapizoidal Back EMF
-function y=bemf_a(theta)
-ct=cos(theta);
-st=sin(theta);
-theta=atan2(st,ct)+pi;
-    if(theta>=0)&&(theta<=pi/6)
-        y=6/pi*theta;
-    elseif(theta>pi/6)&&(theta<=5*pi/6)
-        y=1;
-    elseif(theta>5*pi/6)&&(theta<=7*pi/6)
-        y=-pi/6*theta+6;
-    elseif(theta>7*pi/6)&&(theta<=11*pi/6)
-        y=-1;
-    elseif(theta>11*pi/6)&&(theta<=2*pi)
-        y=6/pi*theta-12;
-    end
 end
-function y=emf_ref_d(theta)
-if (theta>-180)&&(theta<=-120)
-    y=[-1;0;1];
-elseif(theta>-120)&&(theta<=-60)
-    y=[0;-1;1];
-elseif(theta>-60)&&(theta<=0)
-    y=[1;-1;0];
-elseif(theta>0)&&(theta<=60)
-    y=[1;0;-1];
-elseif(theta>60)&&(theta<=120)
-    y=[0;1;-1];
-elseif(theta>120)&&(theta<=180)
-    y=[-1;1;0];
-end
+% Linear interpolation
+function  out = lerp(x, in_min, in_max, out_min, out_max)
+  out= (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 end
 function y=switching(theta)
-ct=cos(theta);
-st=sin(theta);
-theta=(atan2(st,ct)+pi)*180/pi;
-
+theta = theta * 180/pi;
+theta = mod(theta,360);
     if(theta>=0)&&(theta<=60)
         y=[1;-1;0];
     elseif(theta>60)&&(theta<=120)
