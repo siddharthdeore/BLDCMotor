@@ -1,6 +1,13 @@
 # BLDC Motor Dynamics and Control
 Electric motor, commutation playground for three phase PMSM bldc motor
 
+## Hardware
+Schematic
+![Schematic](Hardware/PCBVer1.0.png)
+
+PCB
+![FOC Example](Hardware/SCH_BLDC_Driver_1.0.png)
+
 ## Motor Parameters
 
  Property | Variable | Value | Unit |
