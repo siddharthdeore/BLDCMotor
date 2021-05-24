@@ -10,7 +10,7 @@ const uint8_t pwmArray[sineArraySize] = {128, 132, 136, 140, 143, 147, 151, 155,
 uint8_t svpwm(int angle);
 
 float direction = 1;  // direction -1/+1
-int index = 0;        // angle index
+int idx = 0;        // angle idx
 uint32_t t_prev;
 
 void setup(){
@@ -30,23 +30,23 @@ void loop()
   double dt=(1000)*TWO_PI/omega;
   
   if(millis()-t_prev>dt){
-    analogWrite(PIN_U,svpwm(index));
-    analogWrite(PIN_V,svpwm(index-120));
-    analogWrite(PIN_W,svpwm(index+120));
+    analogWrite(PIN_U,svpwm(idx));
+    analogWrite(PIN_V,svpwm(idx-120));
+    analogWrite(PIN_W,svpwm(idx+120));
 
-    index=index+direction;
+    idx=idx+direction;
 
-    index = index % 360;
-    if (index < 0)
-      index += 360;
+    idx = idx % 360;
+    if (idx < 0)
+      idx += 360;
     
     t_prev=millis();
 
-    Serial.print(svpwm(index));
+    Serial.print(svpwm(idx));
     Serial.print(",");
-    Serial.print(svpwm(index-120));
+    Serial.print(svpwm(idx-120));
     Serial.print(",");
-    Serial.println(svpwm(index+120));
+    Serial.println(svpwm(idx+120));
   }
 }
 
