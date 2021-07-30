@@ -28,3 +28,11 @@ Resistance | R | 3.25 | Ohm
 ### Example 2 : Velocity Tracking
 
 ![FOC Example](https://github.com/siddharthdeore/BLDCMotor/blob/main/simulations/ex_2_sv.png)
+
+
+# Maintainers
+This repository is maintained by:
+
+| <img src="https://avatars.githubusercontent.com/u/12745747" width="32">  | [Siddharth Deore](https://gitlab.advr.iit.it/sdeore) |
+|--|--|
+
