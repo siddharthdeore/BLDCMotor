@@ -33,6 +33,6 @@ Resistance | R | 3.25 | Ohm
 # Maintainers
 This repository is maintained by:
 
-| <img src="https://avatars.githubusercontent.com/u/12745747" width="32">  | [Siddharth Deore](https://gitlab.advr.iit.it/sdeore) |
+| <img src="https://avatars.githubusercontent.com/u/12745747" width="32">  | [Siddharth Deore](https://github.com/siddharthdeore) |
 |--|--|
 
