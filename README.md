@@ -5,6 +5,9 @@ Electric motor, commutation playground for three phase PMSM bldc motor
 PCB
 ![Schematic](Hardware/PCBVer1.0.png)
 
+Note: Due to component lead time significant chages in design are expected.
+![Schematic](Hardware/PCB3View1.png)
+
 ## Motor Parameters
 
  Property | Variable | Value | Unit |
